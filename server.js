@@ -40,8 +40,8 @@ const OPERATIONS = {
 // ---------------------------------------------------------------------------
 
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12시간 (원자료는 연 2회만 갱신됨)
-const PAGE_SIZE = 1000;      // 한 번의 호출로 받아올 건수
-const MAX_PAGES = 30;        // 안전장치: 카테고리당 최대 30페이지(=최대 30,000건)까지만 수집
+const PAGE_SIZE = 300;       // 조달청 API 실측 결과, numOfRows를 1000으로 요청해도 300건까지만 내려옴(내부 상한)
+const MAX_PAGES = 50;        // 안전장치: 카테고리당 최대 50페이지(=최대 15,000건)까지만 수집
 const cache = new Map();     // category -> { items, fetchedAt, totalCountFromApi }
 
 function normalize(v) {
@@ -86,6 +86,10 @@ async function fetchOnePage(operation, pageNo, numOfRows = PAGE_SIZE) {
   return { items, totalCountFromApi };
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function fetchCategoryItems(category) {
   const now = Date.now();
   const cached = cache.get(category);
@@ -102,6 +106,7 @@ async function fetchCategoryItems(category) {
 
   let pageNo = 2;
   while (items.length < totalCountFromApi && pageNo <= MAX_PAGES) {
+    await sleep(150); // 조달청 API 연속 호출 부담을 줄이기 위한 짧은 지연
     const next = await fetchOnePage(operation, pageNo);
     if (!next.items.length) break; // 더 이상 데이터가 없으면 중단
     items = items.concat(next.items);
