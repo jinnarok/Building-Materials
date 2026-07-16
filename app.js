@@ -22,8 +22,12 @@ const els = {
   statusDot: document.getElementById('statusDot'),
   statusText: document.getElementById('statusText'),
   hintText: document.getElementById('hintText'),
-  materialNameList: document.getElementById('materialNameList'),
+  suggestList: document.getElementById('suggestList'),
 };
+
+// 카테고리별로 불러온 전체 품명 목록 캐시 (자동완성용)
+const nameCache = {}; // { [category]: string[] }
+let activeSuggestIndex = -1;
 
 // ---------- 상단 시계 ----------
 function tickClock() {
@@ -56,31 +60,128 @@ checkHealth();
 // 실제 조달청 데이터에 존재하는 품명만 자동완성으로 보여줘서,
 // 존재하지 않는 이름을 검색해 "결과 없음"이 뜨는 상황을 줄여줍니다.
 async function loadNameList(category) {
+  if (nameCache[category]) return nameCache[category];
+
   els.hintText.textContent = '품명 목록을 불러오는 중입니다… (최초 1회는 다소 걸릴 수 있어요)';
   try {
     const res = await fetch(`/api/materials/names?category=${encodeURIComponent(category)}`);
     const data = await res.json();
     if (!res.ok) {
       els.hintText.textContent = `품명 목록을 불러오지 못했습니다: ${data.message || '알 수 없는 오류'}`;
-      return;
+      return [];
     }
-    els.materialNameList.innerHTML = (data.names || [])
-      .map((name) => `<option value="${escapeHtml(name)}"></option>`)
-      .join('');
-    els.hintText.textContent = `Tip. 이 분류에 등록된 품명 ${data.count.toLocaleString('ko-KR')}개 중에서 자동완성으로 골라보세요.`;
+    nameCache[category] = data.names || [];
+    els.hintText.textContent = `Tip. 이 분류에 등록된 품명 ${(data.count || 0).toLocaleString('ko-KR')}개 중에서 자동완성으로 골라보세요.`;
+    return nameCache[category];
   } catch (err) {
     els.hintText.textContent = `품명 목록을 불러오지 못했습니다: ${err.message}`;
+    return [];
   }
 }
 
-loadNameList(els.category.value);
+function highlightMatch(name, query) {
+  const idx = name.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return escapeHtml(name);
+  const before = escapeHtml(name.slice(0, idx));
+  const match = escapeHtml(name.slice(idx, idx + query.length));
+  const after = escapeHtml(name.slice(idx + query.length));
+  return `${before}<mark>${match}</mark>${after}`;
+}
+
+function renderSuggestions(names, query) {
+  activeSuggestIndex = -1;
+  if (!names.length) {
+    els.suggestList.innerHTML = `<li class="suggest-empty">일치하는 품명이 없습니다.</li>`;
+    els.suggestList.hidden = false;
+    return;
+  }
+  els.suggestList.innerHTML = names
+    .slice(0, 30)
+    .map((name) => `<li class="suggest-item" role="option">${highlightMatch(name, query)}</li>`)
+    .join('');
+  els.suggestList.hidden = false;
+}
+
+function hideSuggestions() {
+  els.suggestList.hidden = true;
+  els.suggestList.innerHTML = '';
+  activeSuggestIndex = -1;
+}
+
+async function onKeywordInput() {
+  const query = els.keyword.value.trim();
+  if (!query) {
+    hideSuggestions();
+    return;
+  }
+  const names = await loadNameList(els.category.value);
+  const matched = names.filter((name) => name.toLowerCase().includes(query.toLowerCase()));
+  renderSuggestions(matched, query);
+}
+
+function selectSuggestion(name) {
+  els.keyword.value = name;
+  hideSuggestions();
+  state.keyword = name;
+  state.category = els.category.value;
+  state.pageNo = 1;
+  runSearch();
+}
+
+els.keyword.addEventListener('input', onKeywordInput);
+els.keyword.addEventListener('focus', () => {
+  if (els.keyword.value.trim()) onKeywordInput();
+});
+
+els.suggestList.addEventListener('mousedown', (e) => {
+  const li = e.target.closest('.suggest-item');
+  if (!li) return;
+  selectSuggestion(li.textContent);
+});
+
+els.keyword.addEventListener('keydown', (e) => {
+  const items = Array.from(els.suggestList.querySelectorAll('.suggest-item'));
+  if (els.suggestList.hidden || !items.length) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    activeSuggestIndex = Math.min(activeSuggestIndex + 1, items.length - 1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    activeSuggestIndex = Math.max(activeSuggestIndex - 1, 0);
+  } else if (e.key === 'Enter' && activeSuggestIndex >= 0) {
+    e.preventDefault();
+    selectSuggestion(items[activeSuggestIndex].textContent);
+    return;
+  } else if (e.key === 'Escape') {
+    hideSuggestions();
+    return;
+  } else {
+    return;
+  }
+
+  items.forEach((item, idx) => item.classList.toggle('active', idx === activeSuggestIndex));
+  items[activeSuggestIndex]?.scrollIntoView({ block: 'nearest' });
+});
+
+document.addEventListener('click', (e) => {
+  if (!els.suggestList.contains(e.target) && e.target !== els.keyword) {
+    hideSuggestions();
+  }
+});
+
 els.category.addEventListener('change', () => {
+  hideSuggestions();
+  els.keyword.value = '';
   loadNameList(els.category.value);
 });
+
+loadNameList(els.category.value);
 
 // ---------- 검색 ----------
 els.form.addEventListener('submit', (e) => {
   e.preventDefault();
+  hideSuggestions();
   state.keyword = els.keyword.value.trim();
   state.category = els.category.value;
   state.pageNo = 1;

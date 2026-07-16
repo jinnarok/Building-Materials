@@ -38,10 +38,10 @@
 
     <section class="search-panel">
       <form id="searchForm" class="search-form">
-        <div class="field-group">
+        <div class="field-group autocomplete-wrap">
           <label for="keyword">품명 검색</label>
-          <input type="text" id="keyword" name="keyword" placeholder="예: 철근, 시멘트, 복공판, 단열재…" autocomplete="off" list="materialNameList" />
-          <datalist id="materialNameList"></datalist>
+          <input type="text" id="keyword" name="keyword" placeholder="예: 철근, 시멘트, 복공판, 단열재…" autocomplete="off" />
+          <ul id="suggestList" class="suggest-list" hidden></ul>
         </div>
         <div class="field-group narrow">
           <label for="category">자재 분류</label>
