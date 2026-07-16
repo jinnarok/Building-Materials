@@ -48,12 +48,12 @@ function normalize(v) {
   return (v ?? '').toString().toLowerCase();
 }
 
-async function fetchOnePage(operation, pageNo) {
+async function fetchOnePage(operation, pageNo, numOfRows = PAGE_SIZE) {
   const response = await axios.get(`${BASE_URL}/${operation}`, {
     params: {
       ServiceKey: SERVICE_KEY,
       pageNo,
-      numOfRows: PAGE_SIZE,
+      numOfRows,
       type: 'json',
     },
     timeout: 15000,
@@ -137,6 +137,25 @@ app.get('/api/materials', async (req, res) => {
   }
 
   const targetCategory = OPERATIONS[category] ? category : 'electric';
+
+  // 진단 모드: numOfRows 크기별로 실제 몇 건이 돌아오는지 한 번에 확인
+  // (조달청 API가 numOfRows를 너무 크게 주면 totalCount는 정상인데
+  //  item 리스트만 비어서 오는 경우가 있어, 어느 크기부터 문제가 생기는지 확인)
+  // GET /api/materials?debug=sizes&category=construction
+  if (debug === 'sizes') {
+    const operation = OPERATIONS[targetCategory];
+    const candidateSizes = [10, 20, 50, 100, 300, 500, 1000];
+    const results = [];
+    for (const size of candidateSizes) {
+      try {
+        const r = await fetchOnePage(operation, 1, size);
+        results.push({ numOfRows: size, itemCount: r.items.length, totalCountFromApi: r.totalCountFromApi });
+      } catch (e) {
+        results.push({ numOfRows: size, error: e.message, raw: e.raw });
+      }
+    }
+    return res.json({ category: targetCategory, operation, results });
+  }
 
   try {
     const { items: allItems, totalCountFromApi } = await fetchCategoryItems(targetCategory);
