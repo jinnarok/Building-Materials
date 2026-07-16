@@ -48,6 +48,16 @@ function normalize(v) {
   return (v ?? '').toString().toLowerCase();
 }
 
+function extractItems(data) {
+  const body = data?.response?.body || data?.body;
+  if (!body) return [];
+  const itemsField = body.items;
+  if (Array.isArray(itemsField)) return itemsField; // items가 배열로 바로 오는 경우
+  if (itemsField && Array.isArray(itemsField.item)) return itemsField.item; // {item:[...]}
+  if (itemsField && itemsField.item) return [itemsField.item]; // {item:{...}} 단건
+  return [];
+}
+
 async function fetchOnePage(operation, pageNo, numOfRows = PAGE_SIZE) {
   const response = await axios.get(`${BASE_URL}/${operation}`, {
     params: {
@@ -68,8 +78,7 @@ async function fetchOnePage(operation, pageNo, numOfRows = PAGE_SIZE) {
     throw err;
   }
 
-  const rawItems = data?.response?.body?.items?.item || data?.body?.items?.item || [];
-  const items = Array.isArray(rawItems) ? rawItems : [rawItems].filter(Boolean);
+  const items = extractItems(data);
   const totalCountFromApi = Number(
     data?.response?.body?.totalCount ?? data?.body?.totalCount ?? items.length
   );
@@ -137,6 +146,17 @@ app.get('/api/materials', async (req, res) => {
   }
 
   const targetCategory = OPERATIONS[category] ? category : 'electric';
+
+  // 진단 모드: 조달청 원본 응답을 가공 없이 그대로 확인 (구조가 예상과 다를 때 최종 확인용)
+  // GET /api/materials?debug=raw&category=construction
+  if (debug === 'raw') {
+    const operation = OPERATIONS[targetCategory];
+    const response = await axios.get(`${BASE_URL}/${operation}`, {
+      params: { ServiceKey: SERVICE_KEY, pageNo: 1, numOfRows: 5, type: 'json' },
+      timeout: 15000,
+    });
+    return res.json({ category: targetCategory, operation, raw: response.data });
+  }
 
   // 진단 모드: numOfRows 크기별로 실제 몇 건이 돌아오는지 한 번에 확인
   // (조달청 API가 numOfRows를 너무 크게 주면 totalCount는 정상인데
