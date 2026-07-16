@@ -150,6 +150,29 @@ app.get('/api/materials', async (req, res) => {
     });
   }
 
+  // 진단 모드: 4개 카테고리 전체를 훑어서 키워드가 실제로 어디에 있는지 확인
+  // GET /api/materials?debug=where&keyword=시멘트
+  if (debug === 'where') {
+    const needle = normalize(keyword.trim());
+    const report = {};
+    for (const cat of Object.keys(OPERATIONS)) {
+      try {
+        const { items, totalCountFromApi } = await fetchCategoryItems(cat);
+        const matches = needle ? items.filter((item) => matchesKeyword(item, needle)) : [];
+        report[cat] = {
+          totalCountFromApi,
+          collectedCount: items.length,
+          matchCount: matches.length,
+          sampleNames: items.slice(0, 5).map((i) => i.prdctClsfcNoNm),
+          sampleMatches: matches.slice(0, 3).map((i) => ({ name: i.prdctClsfcNoNm, spec: i.krnPrdctNm })),
+        };
+      } catch (e) {
+        report[cat] = { error: e.message };
+      }
+    }
+    return res.json({ keyword: keyword.trim(), report });
+  }
+
   const targetCategory = OPERATIONS[category] ? category : 'electric';
 
   // 진단 모드: 조달청 원본 응답을 가공 없이 그대로 확인 (구조가 예상과 다를 때 최종 확인용)
@@ -227,6 +250,39 @@ app.get('/api/materials', async (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, hasKey: Boolean(SERVICE_KEY) });
+});
+
+/**
+ * 카테고리별 실제 품명(prdctClsfcNoNm) 목록 — 프론트엔드 자동완성용
+ * GET /api/materials/names?category=construction
+ */
+app.get('/api/materials/names', async (req, res) => {
+  const { category = 'electric' } = req.query;
+
+  if (!SERVICE_KEY) {
+    return res.status(500).json({
+      error: 'SERVICE_KEY_MISSING',
+      message: '.env 파일에 DATA_GO_KR_SERVICE_KEY를 설정해주세요.',
+    });
+  }
+
+  const targetCategory = OPERATIONS[category] ? category : 'electric';
+
+  try {
+    const { items } = await fetchCategoryItems(targetCategory);
+    const nameSet = new Set();
+    items.forEach((item) => {
+      if (item.prdctClsfcNoNm) nameSet.add(item.prdctClsfcNoNm);
+    });
+    const names = Array.from(nameSet).sort((a, b) => a.localeCompare(b, 'ko'));
+    res.json({ category: targetCategory, count: names.length, names });
+  } catch (err) {
+    console.error('품명 목록 조회 오류:', err.raw || err.response?.data || err.message);
+    res.status(err.status || 500).json({
+      error: err.raw ? 'UPSTREAM_ERROR' : 'REQUEST_FAILED',
+      message: err.message,
+    });
+  }
 });
 
 app.listen(PORT, () => {
