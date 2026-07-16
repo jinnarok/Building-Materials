@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>자재시세판 — 건축자재 실시간 거래금액 조회</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="grid-overlay" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark">＋</span>
+        <div class="brand-text">
+          <span class="brand-title">자재시세판</span>
+          <span class="brand-sub">MATERIAL PRICE LEDGER</span>
+        </div>
+      </div>
+      <div class="topbar-meta">
+        <span id="clock" class="mono">--:--:--</span>
+        <span class="dot" id="statusDot" title="API 연결 상태"></span>
+        <span id="statusText" class="mono small">연결 확인 중</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">조달청 나라장터 &middot; 가격정보현황서비스</p>
+      <h1>건축자재, 지금 얼마입니까.</h1>
+      <p class="hero-desc">품명을 입력하면 조달청에 등록된 시설공통자재 가격정보를 조회합니다.<br class="br-desktop">참고가격 기준이며 실제 계약가는 수량·조건에 따라 달라질 수 있습니다.</p>
+    </section>
+
+    <section class="search-panel">
+      <form id="searchForm" class="search-form">
+        <div class="field-group">
+          <label for="keyword">품명 검색</label>
+          <input type="text" id="keyword" name="keyword" placeholder="예: 철근, 시멘트, 복공판, 단열재…" autocomplete="off" />
+        </div>
+        <div class="field-group narrow">
+          <label for="category">자재 분류</label>
+          <select id="category" name="category">
+            <option value="electric">전기 · 정보통신</option>
+            <option value="civil">토목</option>
+            <option value="construction">건축</option>
+            <option value="mechanical">기계설비</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-search">
+          <span>조회</span>
+        </button>
+      </form>
+      <p class="hint">Tip. 검색어 없이 조회하면 해당 분류의 최신 등록 자재부터 보여드립니다.</p>
+    </section>
+
+    <section class="results-section">
+      <div class="results-head">
+        <h2>조회 결과</h2>
+        <span id="resultCount" class="mono result-count">—</span>
+      </div>
+
+      <div id="stateBox" class="state-box">
+        <p>왼쪽에 품명을 입력하고 <strong>조회</strong>를 눌러주세요.</p>
+      </div>
+
+      <div class="table-wrap" id="tableWrap" hidden>
+        <table class="price-table">
+          <thead>
+            <tr>
+              <th class="col-idx">No.</th>
+              <th>품명 / 규격</th>
+              <th>물품식별번호</th>
+              <th class="col-num">단위</th>
+              <th class="col-num">가격</th>
+              <th>인도조건</th>
+              <th>게시일자</th>
+              <th>공급지역</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="pager" id="pager" hidden>
+        <button id="prevPage" class="pager-btn" type="button">← 이전</button>
+        <span id="pageLabel" class="mono"></span>
+        <button id="nextPage" class="pager-btn" type="button">다음 →</button>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      <p>데이터 출처: 공공데이터포털 — 조달청_나라장터 가격정보현황서비스 (참고가격, 매일 D-1 갱신)</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

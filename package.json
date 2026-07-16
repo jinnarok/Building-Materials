@@ -1,0 +1,17 @@
+{
+  "name": "material-price-app",
+  "version": "1.0.0",
+  "description": "조달청 나라장터 가격정보현황서비스 API를 이용한 건축자재 실시간 거래금액 검색 웹사이트",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1"
+  }
+}
