@@ -14,14 +14,13 @@ app.use(express.static('public'));
 const BASE_URL = 'http://apis.data.go.kr/1230000/ao/PriceInfoService';
 
 // 카테고리별 오퍼레이션(operation) 매핑
-// getPriceInfoListFcltyCmmnMtrilEngrk(전기/정보통신)은 공식 문서에서 확인된 오퍼레이션명입니다.
-// 나머지(토목/건축/기계설비/종합)는 활용신청 승인 후 마이페이지 > Swagger 콘솔에서
-// 정확한 오퍼레이션명을 확인해 아래 값을 교체해주세요. (이름 규칙은 동일한 패턴을 따릅니다)
+// 조달청 공식 참고문서(OpenAPI참고자료_나라장터_가격정보현황서비스_1.1)에서 확인한 정확한 값입니다.
 const OPERATIONS = {
-  electric: 'getPriceInfoListFcltyCmmnMtrilEngrk',   // 전기/정보통신 자재 (확인됨)
-  civil: 'getPriceInfoListFcltyCmmnMtrilCvl',         // 토목 자재 (Swagger에서 확인 후 수정)
-  construction: 'getPriceInfoListFcltyCmmnMtrilCnstw', // 건축 자재 (Swagger에서 확인 후 수정)
-  mechanical: 'getPriceInfoListFcltyCmmnMtrilMchnry',  // 기계설비 자재 (Swagger에서 확인 후 수정)
+  civil: 'getPriceInfoListFcltyCmmnMtrilEngrk',        // 시설공통자재(토목) 가격정보
+  construction: 'getPriceInfoListFcltyCmmnMtrilBildng', // 시설공통자재(건축) 가격정보
+  mechanical: 'getPriceInfoListFcltyCmmnMtrilMchnEqp',  // 시설공통자재(기계설비) 가격정보
+  electric: 'getPriceInfoListFcltyCmmnMtrilElctyIrmc',  // 시설공통자재(전기,정보통신) 가격정보
+  total: 'getPriceInfoListFcltyCmmnMtrilTotal',         // 시설공통자재(종합) 가격정보
 };
 
 /**
@@ -43,7 +42,7 @@ app.get('/api/materials', async (req, res) => {
   try {
     const response = await axios.get(`${BASE_URL}/${operation}`, {
       params: {
-        serviceKey: SERVICE_KEY,
+        ServiceKey: SERVICE_KEY,
         pageNo,
         numOfRows,
         type: 'json',

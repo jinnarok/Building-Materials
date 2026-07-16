@@ -128,14 +128,14 @@ function renderResults(items) {
 
   els.tableBody.innerHTML = items.map((item, idx) => {
     const rowNo = (state.pageNo - 1) * state.numOfRows + idx + 1;
-    const name = item.prdctClsfcNoNm || item.krnPrdctNm || item.item_name || '-';
-    const spec = item.spcsNm || item.krnPrdctNm || '';
+    const name = item.prdctClsfcNoNm || '-';
+    const spec = item.krnPrdctNm || '';
     const idNo = item.prdctIdntNo || item.prdctClsfcNo || '-';
-    const unit = item.unit || item.unitNm || '-';
-    const price = item.price || item.prc || item.amt || '-';
-    const delivery = item.dlvrCndNm || item.deliveryCondition || '-';
-    const date = item.regDate || item.basePrdctDate || item.exhbtnStdDt || '-';
-    const region = item.spplyRgnNm || item.regionNm || '전국';
+    const unit = item.unit || '-';
+    const price = item.prce ?? '-';
+    const delivery = item.dlvryCndtnNm || '-';
+    const date = item.nticeDt || '-';
+    const region = item.splyJrsdctRgnNm || '전국';
 
     return `
       <tr>

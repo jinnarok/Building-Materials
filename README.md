@@ -27,34 +27,20 @@ material-price-app/
     └── app.js          # 검색/페이지네이션 로직
 ```
 
-## 3. 꼭 확인해야 할 것 — 오퍼레이션(operation)명
+## 3. 오퍼레이션(operation) 매핑 — 조달청 공식 참고문서 기준으로 확정됨
 
-조달청 가격정보현황서비스는 자재 분류별로 **오퍼레이션(엔드포인트)이 따로 존재**합니다.
-현재 확인된 것은 **전기·정보통신** 자재 하나뿐입니다:
+조달청이 제공한 `OpenAPI참고자료_나라장터_가격정보현황서비스_1.1.docx` 문서를 확인해
+아래 5개 분류의 정확한 오퍼레이션명을 모두 반영했습니다. (`server.js`의 `OPERATIONS` 객체)
 
-```
-getPriceInfoListFcltyCmmnMtrilEngrk   ← 전기/정보통신 (확인됨)
-```
+| 분류 | 오퍼레이션명 |
+|---|---|
+| 토목 | `getPriceInfoListFcltyCmmnMtrilEngrk` |
+| 건축 | `getPriceInfoListFcltyCmmnMtrilBildng` |
+| 기계설비 | `getPriceInfoListFcltyCmmnMtrilMchnEqp` |
+| 전기·정보통신 | `getPriceInfoListFcltyCmmnMtrilElctyIrmc` |
+| 종합(전체) | `getPriceInfoListFcltyCmmnMtrilTotal` |
 
-토목 / 건축 / 기계설비 / 종합 자재의 정확한 오퍼레이션명은 문서에 표로 나와있지 않아서,
-아래 방법으로 직접 확인 후 `server.js`의 `OPERATIONS` 객체 값을 교체해주셔야 합니다.
-
-### 확인 방법
-1. https://www.data.go.kr/data/15129415/openapi.do 접속 (로그인 상태)
-2. **활용신청**이 되어 있다면 상세 페이지에서 **[Swagger 문서 보기]** 또는 **상세기능** 탭 클릭
-3. 각 자재분류(토목/건축/기계설비/종합)별 오퍼레이션명이 나열되어 있음 (예: `getPriceInfoListFcltyCmmnMtril + 분류코드`)
-4. `server.js` 상단의 아래 부분을 실제 값으로 교체:
-
-```js
-const OPERATIONS = {
-  electric: 'getPriceInfoListFcltyCmmnMtrilEngrk',   // 확인됨, 수정 불필요
-  civil: 'getPriceInfoListFcltyCmmnMtrilCvl',         // ← 실제 값으로 교체
-  construction: 'getPriceInfoListFcltyCmmnMtrilCnstw', // ← 실제 값으로 교체
-  mechanical: 'getPriceInfoListFcltyCmmnMtrilMchnry',  // ← 실제 값으로 교체
-};
-```
-
-지금은 "전기·정보통신" 카테고리만 정확히 동작하며, 다른 분류를 선택하면 404/오류가 날 수 있습니다.
+인증키 파라미터명도 문서 기준 `ServiceKey`(대문자 S)로 맞췄습니다.
 
 ## 4. 인증키 관련 참고사항
 
