@@ -14,13 +14,14 @@ app.use(express.static('public'));
 const BASE_URL = 'http://apis.data.go.kr/1230000/ao/PriceInfoService';
 
 // 카테고리별 오퍼레이션(operation) 매핑
-// 조달청 공식 참고문서(OpenAPI참고자료_나라장터_가격정보현황서비스_1.1)에서 확인한 정확한 값입니다.
+// 조달청 공식 참고문서 기준 5개 오퍼레이션 중, 실제 서버 테스트 결과
+// "종합(Total)"은 문서에는 있으나 실제로 배포되지 않아(404) 제외했습니다.
+// 나머지 4개는 전부 실제 호출 테스트로 정상 동작을 확인했습니다.
 const OPERATIONS = {
-  civil: 'getPriceInfoListFcltyCmmnMtrilEngrk',        // 시설공통자재(토목) 가격정보
-  construction: 'getPriceInfoListFcltyCmmnMtrilBildng', // 시설공통자재(건축) 가격정보
-  mechanical: 'getPriceInfoListFcltyCmmnMtrilMchnEqp',  // 시설공통자재(기계설비) 가격정보
-  electric: 'getPriceInfoListFcltyCmmnMtrilElctyIrmc',  // 시설공통자재(전기,정보통신) 가격정보
-  total: 'getPriceInfoListFcltyCmmnMtrilTotal',         // 시설공통자재(종합) 가격정보
+  civil: 'getPriceInfoListFcltyCmmnMtrilEngrk',        // 시설공통자재(토목) 가격정보 — 확인됨
+  construction: 'getPriceInfoListFcltyCmmnMtrilBildng', // 시설공통자재(건축) 가격정보 — 확인됨
+  mechanical: 'getPriceInfoListFcltyCmmnMtrilMchnEqp',  // 시설공통자재(기계설비) 가격정보 — 확인됨
+  electric: 'getPriceInfoListFcltyCmmnMtrilElctyIrmc',  // 시설공통자재(전기,정보통신) 가격정보 — 확인됨
 };
 
 /**

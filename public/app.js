@@ -1,6 +1,6 @@
 const state = {
   keyword: '',
-  category: 'electric',
+  category: 'construction',
   pageNo: 1,
   numOfRows: 15,
   totalCount: 0,

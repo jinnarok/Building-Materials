@@ -27,20 +27,20 @@ material-price-app/
     └── app.js          # 검색/페이지네이션 로직
 ```
 
-## 3. 오퍼레이션(operation) 매핑 — 조달청 공식 참고문서 기준으로 확정됨
+## 3. 오퍼레이션(operation) 매핑 — 실제 호출 테스트로 검증 완료
 
-조달청이 제공한 `OpenAPI참고자료_나라장터_가격정보현황서비스_1.1.docx` 문서를 확인해
-아래 5개 분류의 정확한 오퍼레이션명을 모두 반영했습니다. (`server.js`의 `OPERATIONS` 객체)
+조달청 참고문서에 나온 5개 오퍼레이션을 실제로 하나씩 호출해본 결과, 4개는 정상 동작했고
+**"종합(Total)"은 문서에는 있지만 실제 서버에는 배포되어 있지 않아(404) 목록에서 제외**했습니다.
 
-| 분류 | 오퍼레이션명 |
-|---|---|
-| 토목 | `getPriceInfoListFcltyCmmnMtrilEngrk` |
-| 건축 | `getPriceInfoListFcltyCmmnMtrilBildng` |
-| 기계설비 | `getPriceInfoListFcltyCmmnMtrilMchnEqp` |
-| 전기·정보통신 | `getPriceInfoListFcltyCmmnMtrilElctyIrmc` |
-| 종합(전체) | `getPriceInfoListFcltyCmmnMtrilTotal` |
+| 분류 | 오퍼레이션명 | 상태 |
+|---|---|---|
+| 토목 | `getPriceInfoListFcltyCmmnMtrilEngrk` | ✅ 정상 |
+| 건축 | `getPriceInfoListFcltyCmmnMtrilBildng` | ✅ 정상 |
+| 기계설비 | `getPriceInfoListFcltyCmmnMtrilMchnEqp` | ✅ 정상 |
+| 전기·정보통신 | `getPriceInfoListFcltyCmmnMtrilElctyIrmc` | ✅ 정상 |
+| 종합(전체) | `getPriceInfoListFcltyCmmnMtrilTotal` | ❌ 404 (미사용) |
 
-인증키 파라미터명도 문서 기준 `ServiceKey`(대문자 S)로 맞췄습니다.
+인증키 파라미터명은 문서 기준 `ServiceKey`(대문자 S)입니다.
 
 ## 4. 인증키 관련 참고사항
 
