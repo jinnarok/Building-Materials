@@ -38,10 +38,9 @@
 
     <section class="search-panel">
       <form id="searchForm" class="search-form">
-        <div class="field-group autocomplete-wrap">
+        <div class="field-group">
           <label for="keyword">품명 검색</label>
           <input type="text" id="keyword" name="keyword" placeholder="예: 철근, 시멘트, 복공판, 단열재…" autocomplete="off" />
-          <ul id="suggestList" class="suggest-list" hidden></ul>
         </div>
         <div class="field-group narrow">
           <label for="category">자재 분류</label>
@@ -57,7 +56,16 @@
         </button>
       </form>
       <p class="hint" id="hintText">Tip. 검색어 없이 조회하면 해당 분류의 최신 등록 자재부터 보여드립니다.</p>
+
+      <div id="suggestPanel" class="suggest-panel" hidden>
+        <div class="suggest-panel-head">
+          <span id="suggestCount" class="suggest-count"></span>
+          <span class="suggest-keys">↑↓ Enter 선택</span>
+        </div>
+        <ul id="suggestList" class="suggest-list"></ul>
+      </div>
     </section>
+
 
     <section class="results-section">
       <div class="results-head">

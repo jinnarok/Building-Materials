@@ -270,11 +270,14 @@ app.get('/api/materials/names', async (req, res) => {
 
   try {
     const { items } = await fetchCategoryItems(targetCategory);
-    const nameSet = new Set();
+    const countMap = new Map();
     items.forEach((item) => {
-      if (item.prdctClsfcNoNm) nameSet.add(item.prdctClsfcNoNm);
+      if (!item.prdctClsfcNoNm) return;
+      countMap.set(item.prdctClsfcNoNm, (countMap.get(item.prdctClsfcNoNm) || 0) + 1);
     });
-    const names = Array.from(nameSet).sort((a, b) => a.localeCompare(b, 'ko'));
+    const names = Array.from(countMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
     res.json({ category: targetCategory, count: names.length, names });
   } catch (err) {
     console.error('품명 목록 조회 오류:', err.raw || err.response?.data || err.message);

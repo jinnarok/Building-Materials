@@ -22,6 +22,8 @@ const els = {
   statusDot: document.getElementById('statusDot'),
   statusText: document.getElementById('statusText'),
   hintText: document.getElementById('hintText'),
+  suggestPanel: document.getElementById('suggestPanel'),
+  suggestCount: document.getElementById('suggestCount'),
   suggestList: document.getElementById('suggestList'),
 };
 
@@ -79,6 +81,13 @@ async function loadNameList(category) {
   }
 }
 
+const CATEGORY_LABELS = {
+  construction: '건축',
+  civil: '토목',
+  mechanical: '기계설비',
+  electric: '전기·통신',
+};
+
 function highlightMatch(name, query) {
   const idx = name.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) return escapeHtml(name);
@@ -88,22 +97,36 @@ function highlightMatch(name, query) {
   return `${before}<mark>${match}</mark>${after}`;
 }
 
-function renderSuggestions(names, query) {
+function renderSuggestions(matched, query, category) {
   activeSuggestIndex = -1;
-  if (!names.length) {
-    els.suggestList.innerHTML = `<li class="suggest-empty">일치하는 품명이 없습니다.</li>`;
-    els.suggestList.hidden = false;
+  const label = CATEGORY_LABELS[category] || category;
+
+  if (!matched.length) {
+    els.suggestCount.textContent = `검색 결과 0건 (${label})`;
+    els.suggestList.innerHTML = `<li class="suggest-empty">"${escapeHtml(query)}"와(과) 일치하는 품명이 없습니다.</li>`;
+    els.suggestPanel.hidden = false;
     return;
   }
-  els.suggestList.innerHTML = names
+
+  els.suggestCount.textContent = `검색 결과 ${matched.length.toLocaleString('ko-KR')}건 (${label})`;
+  els.suggestList.innerHTML = matched
     .slice(0, 30)
-    .map((name) => `<li class="suggest-item" role="option">${highlightMatch(name, query)}</li>`)
+    .map(({ name, count }) => `
+      <li class="suggest-item" role="option" data-name="${escapeHtml(name)}">
+        <span class="suggest-avatar">${escapeHtml(name.charAt(0))}</span>
+        <span class="suggest-main">
+          <span class="suggest-name">${highlightMatch(name, query)}</span>
+          <span class="suggest-sub">${count.toLocaleString('ko-KR')}건 등록</span>
+        </span>
+        <span class="suggest-badge">${label}</span>
+      </li>
+    `)
     .join('');
-  els.suggestList.hidden = false;
+  els.suggestPanel.hidden = false;
 }
 
 function hideSuggestions() {
-  els.suggestList.hidden = true;
+  els.suggestPanel.hidden = true;
   els.suggestList.innerHTML = '';
   activeSuggestIndex = -1;
 }
@@ -114,9 +137,11 @@ async function onKeywordInput() {
     hideSuggestions();
     return;
   }
-  const names = await loadNameList(els.category.value);
-  const matched = names.filter((name) => name.toLowerCase().includes(query.toLowerCase()));
-  renderSuggestions(matched, query);
+  const category = els.category.value;
+  const names = await loadNameList(category);
+  const needle = query.toLowerCase();
+  const matched = names.filter(({ name }) => name.toLowerCase().includes(needle));
+  renderSuggestions(matched, query, category);
 }
 
 function selectSuggestion(name) {
@@ -135,13 +160,13 @@ els.keyword.addEventListener('focus', () => {
 
 els.suggestList.addEventListener('mousedown', (e) => {
   const li = e.target.closest('.suggest-item');
-  if (!li) return;
-  selectSuggestion(li.textContent);
+  if (!li || !li.dataset.name) return;
+  selectSuggestion(li.dataset.name);
 });
 
 els.keyword.addEventListener('keydown', (e) => {
-  const items = Array.from(els.suggestList.querySelectorAll('.suggest-item'));
-  if (els.suggestList.hidden || !items.length) return;
+  const items = Array.from(els.suggestList.querySelectorAll('.suggest-item[data-name]'));
+  if (els.suggestPanel.hidden || !items.length) return;
 
   if (e.key === 'ArrowDown') {
     e.preventDefault();
@@ -151,7 +176,7 @@ els.keyword.addEventListener('keydown', (e) => {
     activeSuggestIndex = Math.max(activeSuggestIndex - 1, 0);
   } else if (e.key === 'Enter' && activeSuggestIndex >= 0) {
     e.preventDefault();
-    selectSuggestion(items[activeSuggestIndex].textContent);
+    selectSuggestion(items[activeSuggestIndex].dataset.name);
     return;
   } else if (e.key === 'Escape') {
     hideSuggestions();
@@ -165,7 +190,7 @@ els.keyword.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('click', (e) => {
-  if (!els.suggestList.contains(e.target) && e.target !== els.keyword) {
+  if (!els.suggestPanel.contains(e.target) && e.target !== els.keyword) {
     hideSuggestions();
   }
 });
